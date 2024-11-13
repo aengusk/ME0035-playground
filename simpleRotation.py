@@ -41,6 +41,15 @@ notes = [262, # Index 0: C
          466, # Index 10: A#
          494] # Index 11: B
 
+noSharps = [262, # Index 0: C4
+            294, # Index 1: D
+            330, # Index 2: E
+            349, # Index 3: F
+            392, # Index 4: G
+            440, # Index 5: A
+            494, # Index 6: B
+            523] # Index 7: C5
+
 
 # ---------- MAIN CODE ----------
 speaker = simpleSpeaker(PWM('P0', Pin.OUT))
@@ -58,9 +67,9 @@ while True:
             print(angle)
 
             # TODO: Will need to revisit how to deal with out of bounds angles
-            if angle > 180:
-                angle = 180
+            if angle > 270:
+                angle = 270
 
-            note = int(angle/15) -1
+            note = int(angle/34) -1
             print("index: "+str(note))
-            speaker.playNote(notes[note])
+            speaker.playNote(noSharps[note])
