@@ -42,8 +42,7 @@ class simpleSpeaker:
         print("playing note!")
         self.pin.freq(note)
         self.pin.duty_u16(int(65535/8))
-        time.sleep(1)
-        self.pin.duty_u16(0)
+        time.sleep(0.1)
 
 
 # Test code
