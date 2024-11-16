@@ -1,10 +1,11 @@
-from machine import Pin, PWM
+# simpleRotation.py
+# Reads April Tag ID and orientation, sends info over BLE to ESP32 for processing
+# By: Anne Hu, 11/16/24
+
 import time
 import sensor
 import math
-
-from speaker import simpleSpeaker
-
+from BLE_CEEO import Yell
 
 # --------- CAMERA SET UP -----------
 sensor.reset()
@@ -28,31 +29,42 @@ f_y = (2.8 / 2.952) * 120  # find_apriltags defaults to this if not set
 c_x = 160 * 0.5  # find_apriltags defaults to this if not set (the image.w * 0.5)
 c_y = 120 * 0.5  # find_apriltags defaults to this if not set (the image.h * 0.5)
 
-notes = [262, # Index 0: C
-         277, # Index 1: C#
-         294, # Index 2: D
-         311, # Index 3: D#
-         330, # Index 4: E
-         349, # Index 5: F
-         370, # Index 6: F#
-         392, # Index 7: G
-         415, # Index 8: G#
-         440, # Index 9: A
-         466, # Index 10: A#
-         494] # Index 11: B
 
-noSharps = [262, # Index 0: C4
-            294, # Index 1: D
-            330, # Index 2: E
-            349, # Index 3: F
-            392, # Index 4: G
-            440, # Index 5: A
-            494, # Index 6: B
-            523] # Index 7: C5
+# ------------- BLE CODE ---------------
+
+# to connect the camera peripheral to the ESP central
+def connectBLE(p):
+    try:
+        if p.connect_up():
+            print('P connected')
+            time.sleep(2)
+            p.send("test")
+            if p.is_any:
+                print(p.read())
+            if not p.is_connected:
+                print('lost connection')
+            time.sleep(1)
+    except Exception as e:
+        print("except 1")
+        print(e)
+    finally:
+        p.disconnect()
+        print('closing up')
+
+# to send messages over BLE
+def sendMessage(p, message):
+    while not p.is_connected:
+        try:
+            connectBLE(p)
+        except Exception as e:
+            print("trying to connect before sending message... "+e)
+    p.send(message)
 
 
-# ---------- MAIN CODE ----------
-speaker = simpleSpeaker(PWM('P0', Pin.OUT))
+p = Yell('camera', interval_us=100000, verbose = True)
+connectBLE(p)
+
+# ---------------- MAIN CODE ----------------
 
 while True:
     clock.tick()
@@ -72,4 +84,3 @@ while True:
 
             note = int(angle/34) -1
             print("index: "+str(note))
-            speaker.playNote(noSharps[note])
