@@ -1,8 +1,8 @@
 # simpleRotation.py
 # Reads April Tag ID and orientation, sends info over BLE to ESP32 for processing
-# By: Anne Hu, 11/16/24
+# By: Anne Hu, 11/17/24
 
-import time
+import uasyncio as asyncio
 import sensor
 import math
 from peripheral import Peripheral
@@ -14,46 +14,47 @@ sensor.set_framesize(sensor.QQVGA) # changing to QVGA (320x240) from QQVGA, make
 sensor.skip_frames(time=2000)
 sensor.set_auto_gain(False)  # must turn this off to prevent image washout...
 sensor.set_auto_whitebal(False)  # must turn this off to prevent image washout...
-clock = time.clock()
 
 # --------- HELPER FUNCTIONS AND DEFINITIONS ----------
 def degrees(radians):
     return (180 * radians) / math.pi
 
-last_tag_seen = 0
-no_tag_timeout = 1  # time in seconds before car stops after not detecting apriltag
 
+async def main(p):
+    lastSent = None
 
-f_x = (2.8 / 3.984) * 160  # find_apriltags defaults to this if not set
-f_y = (2.8 / 2.952) * 120  # find_apriltags defaults to this if not set
-c_x = 160 * 0.5  # find_apriltags defaults to this if not set (the image.w * 0.5)
-c_y = 120 * 0.5  # find_apriltags defaults to this if not set (the image.h * 0.5)
+    while True:
+        img = sensor.snapshot()
 
-
-# ------------- BLE CODE ---------------
-p = Peripheral('Camera') # Creating a peripheral object named "Camera"
-p.connect()
-
-# ---------------- MAIN CODE ----------------
-
-
-while True:
-    clock.tick()
-    img = sensor.snapshot()
-    tags_we_see = img.find_apriltags(fx=f_x, fy=f_y, cx=c_x, cy=c_y)
-
-    if tags_we_see:
-        for tag in tags_we_see:  # defaults to TAG36H11
+        for tag in img.find_apriltags():  # defaults to TAG36H11
             img.draw_rectangle(tag.rect, color=(255, 0, 0))
             img.draw_cross(tag.cx, tag.cy, color=(0, 255, 0))
             angle = degrees(tag.z_rotation)
             print(angle)
 
-            # TODO: Will need to revisit how to deal with out of bounds angles
             if angle > 270:
                 angle = 270
 
-            note = int(angle/34) -1
-            print("index: "+str(note))
-            p.sendMessage()
+            note = int(angle/34)
+            print("note index: "+str(note))
+            print("tag id: "+str(tag.id))
 
+            toSend = str(note)+","+str(tag.id)
+
+            if toSend != lastSent:
+                p.send(str(toSend))
+                lastSent = toSend
+
+
+
+        await asyncio.sleep(0.01)
+
+# ---------------- MAIN CODE ----------------
+p = Peripheral('Camera') # Creating a peripheral object named "Camera"
+p.connect()
+print("----- Camera is connected to BLE -------")
+
+loop = asyncio.get_event_loop()
+loop.create_task(p.messageHandler())
+loop.create_task(main(p))
+loop.run_forever()
