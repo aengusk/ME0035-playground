@@ -5,7 +5,7 @@
 import time
 import sensor
 import math
-from BLE_CEEO import Yell
+from peripheral import Peripheral
 
 # --------- CAMERA SET UP -----------
 sensor.reset()
@@ -31,40 +31,11 @@ c_y = 120 * 0.5  # find_apriltags defaults to this if not set (the image.h * 0.5
 
 
 # ------------- BLE CODE ---------------
-
-# to connect the camera peripheral to the ESP central
-def connectBLE(p):
-    try:
-        if p.connect_up():
-            print('P connected')
-            time.sleep(2)
-            p.send("test")
-            if p.is_any:
-                print(p.read())
-            if not p.is_connected:
-                print('lost connection')
-            time.sleep(1)
-    except Exception as e:
-        print("except 1")
-        print(e)
-    finally:
-        p.disconnect()
-        print('closing up')
-
-# to send messages over BLE
-def sendMessage(p, message):
-    while not p.is_connected:
-        try:
-            connectBLE(p)
-        except Exception as e:
-            print("trying to connect before sending message... "+e)
-    p.send(message)
-
-
-p = Yell('camera', interval_us=100000, verbose = True)
-connectBLE(p)
+p = Peripheral('Camera') # Creating a peripheral object named "Camera"
+p.connect()
 
 # ---------------- MAIN CODE ----------------
+
 
 while True:
     clock.tick()
@@ -84,3 +55,5 @@ while True:
 
             note = int(angle/34) -1
             print("index: "+str(note))
+            p.sendMessage()
+
