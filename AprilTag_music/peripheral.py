@@ -1,39 +1,62 @@
 # Peripheral - By: annehu - Sun Nov 17 2024
 from BLE_CEEO import Yell
 import uasyncio as asyncio
+import time
 
 class Peripheral():
-    def _init_(self, name):
+    def __init__(self, name):
         self.p = Yell(name, interval_us=100000, verbose = True)
-        self.nextMessage
-        self.toSend = False
+        self.nextMessage = None
+        self.queue = False
 
     # To connect the peripheral to central
-    async def connect(self):
+    def connect(self):
         while not self.p.is_connected:
+            print("---------Still not connected--------")
             try:
                 self.p.connect_up()
                 print('P connected')
             except Exception as e:
                 print(e + " --- not connecting...")
-            await asyncio.sleep(0.1)
+            time.sleep(0.1)
 
     # To add a note to the send queue
-    async def send(self, note):
+    def send(self, note):
+        print("In peripheral.send() function")
         self.nextMessage = note
-        self.toSend = True
+        self.queue = True
+
 
     # To continuously send messages
     async def messageHandler(self):
         while True:
-            if self.toSend:
+            if self.queue:
                 try:
-                    self.p.sendMessage(self.nextMessage)
-                    self.toSend = False
+                    print("Trying to send message")
+                    self.p.send(self.nextMessage)
+                    self.queue = False
                 except Exception as e:
-                    print("couldn't send message, reconnecting")
-                    self.connect()
+                    print("couldn't send message")
+                    if not self.p.is_connected:
+                        print("Reconnecting")
+                        self.p.self.connect_up()
             await asyncio.sleep(0.01)
+
+# async def tester(p):
+#     while True:
+#         p.send("testing testing testing")
+#         print("sent a thing")
+#         await asyncio.sleep(0.01)
+
+# test = Peripheral('Camera')
+# test.connect()
+# loop = asyncio.get_event_loop()
+# loop.create_task(test.messageHandler())
+# loop.create_task(tester(test))
+# loop.run_forever()
+
+
+
 
 
 
