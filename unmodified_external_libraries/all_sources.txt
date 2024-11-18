@@ -1,4 +1,5 @@
 BLE_CEEO.py     unmodified from                         https://github.com/chrisbuerginrogers/SPIKE_Prime/blob/main/BLE/BLE_CEEO.py
+BLE_Minimal.py  unmodified from                         https://github.com/chrisbuerginrogers/SPIKE_Prime/blob/main/BLE/BLE_Minimal.py
 mqtt.py         unmodified from a previous version of   https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py
 networking.py   corrected from                          https://github.com/tuftsceeo/Smart-System-Platform/blob/main/software/networking/networking.py
 now.py          unmodified from                         https://chrisrogers.pyscriptapps.com/nick-esp-now/latest/

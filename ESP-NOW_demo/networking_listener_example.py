@@ -1,10 +1,7 @@
 from networking import Networking
 import time
 
-#Initialise
 networking = Networking()
-
-###Example code###
 
 recipient_mac = b'\xff\xff\xff\xff\xff\xff' #This mac sends to all
 message =  b'Boop'
@@ -22,16 +19,21 @@ def monitor_NOW(verbose = False, verify_mac = True): # keep structured so that i
             messages = [message for message in messages if message[0] in macs_whitelist]
             if verbose: print('{} messages were from our MAC addresses'.format(len(messages)))
         for mac, message, receive_time in messages: # <class 'bytes'>, <class 'str'>, <class 'int'>
-
-
-            print(mac, message, receive_time)
-        print()
-        if message is not None:
-            if int(message) == 2:
-                print('we received an order of 2')
-                print()
+            try: 
+                message = int(message)
+            except (TypeError, ValueError) as e: 
+                if verbose: print('the message "{}" of type {} raised {}'.format(message, type(message), e))
+                continue
+            if message == 0:
+                print('add a ___ to the order')
+            elif message == 1:
+                print('add a ___ to the order')
+            elif message == 2:
+                print('add a ___ to the order')
         time.sleep(1)
 
+def send_NOW(message):
+    raise NotImplementedError
 
 if __name__ == '__main__':
-    monitor_NOW()
+    monitor_NOW(verbose = True)
