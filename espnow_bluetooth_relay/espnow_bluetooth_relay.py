@@ -6,7 +6,7 @@
 import time
 # custom
 from BLE_Minimal import Sniff, Yell # type: ignore (suppresses Pylance lint warning)
-from networking import Networking   # type: ignore (suppresses Pylance lint warning)
+from networking import Networking   # type: ignore
 
 networking = Networking()
 yeller = Yell()
@@ -15,11 +15,6 @@ yeller = Yell()
 # recipient_mac = b'\xff\xff\xff\xff\xff\xff' #This mac sends to all
 
 macs_whitelist = (b'T2\x04!p\xcc',) # a tuple of the mac addresses that we will listen to
-
-def send_NOW(message):
-    raise NotImplementedError
-    # This might not be needed if we end up being one-directional
-
 
 def check_NOW(verbose = False, verify_mac = True):
     messages = list(networking.aen.return_messages())
@@ -44,7 +39,14 @@ def check_NOW(verbose = False, verify_mac = True):
             print('add a ramen to the order')
             yeller.advertize('k2')
 
+def send_NOW(message):
+    raise NotImplementedError
+    # This might not be needed if we end up being one-directional
+
 def check_bluetooth():
+    raise NotImplementedError
+
+def send_bluetooth():
     raise NotImplementedError
 
 refresh_rate = 0.5 #seconds
