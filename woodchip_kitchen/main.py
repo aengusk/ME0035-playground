@@ -1,29 +1,41 @@
 # Python
-import time, machine                                # type: ignore (suppresses Pylance lint warning)
+import time
+import asyncio
 # MicroPython
-from machine import Pin, PWM, UART                  # type: ignore
+from machine import Pin, PWM, UART                  # type: ignore (suppresses Pylance lint warning)
 # custom
 from BLE_CEEO import Yell, Listen                   # type: ignore
 from espnow_bluetooth_relay import check_bluetooth
+from buttonsequences import ButtonSequenceManager
+
+threadsleep = 0.01
 
 class Woodchip_Kitchen:
     
     def __init__(self):
         
         # Need to add stuff for on/off switch, apriltag separation, arrow stepper motor setup, etc.
-        
+        self.on_switch = Pin('GPIO8', Pin.IN, Pin.PULL_UP)
+        self.on = not bool(self.on_switch.value()) # the switch is connected to ground when the game is on
+
+        self.mode_switch = Pin('GPIO9', Pin.IN, Pin.PULL_UP)
+        self.local_mode = bool(self.mode_switch.value()) # the switch is connected to ground when the game is in global mode
+
+
         # Button setup
-        self.btn1 = Pin('GPIO', Pin.IN, Pin.PULL_UP) # pull up resistor; other btn rail is connected to ground, so btn.value becomes 0 when pressed
-        self.btn2 = Pin('GPIO', Pin.IN, Pin.PULL_UP)
-        self.btn3 = Pin('GPIO', Pin.IN, Pin.PULL_UP)
-        self.btn4 = Pin('GPIO', Pin.IN, Pin.PULL_UP)
+        self.btn1 = Pin('GPIO0', Pin.IN, Pin.PULL_UP) # pull up resistor; other btn rail is connected to ground, so btn.value becomes 0 when pressed
+        self.btn2 = Pin('GPIO1', Pin.IN, Pin.PULL_UP)
+        self.btn3 = Pin('GPIO2', Pin.IN, Pin.PULL_UP)
+        self.btn4 = Pin('GPIO3', Pin.IN, Pin.PULL_UP)
         
         # Button LED setup
-        self.led1 = Pin('GPIO', Pin.OUT) 
-        self.led2 = Pin('GPIO', Pin.OUT)
-        self.led3 = Pin('GPIO', Pin.OUT)
-        self.led4 = Pin('GPIO', Pin.OUT)
+        self.led1 = Pin('GPIO4', Pin.OUT) 
+        self.led2 = Pin('GPIO5', Pin.OUT)
+        self.led3 = Pin('GPIO6', Pin.OUT)
+        self.led4 = Pin('GPIO7', Pin.OUT)
         
+        self.button_sequence_manager = ButtonSequenceManager()
+
         # More LED setup
         # for status leds on station?
         
@@ -98,6 +110,24 @@ class Woodchip_Kitchen:
     def ramen(self):
         # button logic
         raise NotImplementedError
+    
+    def new_sequence(self, *args):
+        '''
+        This is the last function that Aengus was about to write before dinner 11/19 5:20 PM
+        This should be callable with a tuple sequence (1,3,4,2) as args[0]
+        or with no args, in which case it should generate its own sequence
+        '''
+        raise NotImplementedError
+
+        sequence = NotImplemented
+        self.button_sequence_manager.new_sequence(sequence)
+        
+
+    async def monitor_switches(self):
+        while True:
+            self.on = not bool(self.on_switch.value())
+            await asyncio.sleep(threadsleep)
+    
         
     # Main code
     def main(self):
