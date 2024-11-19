@@ -1,9 +1,9 @@
 # Python
-import time, machine                # type: ignore (suppresses Pylance lint warning)
+import time, machine                                # type: ignore (suppresses Pylance lint warning)
 # MicroPython
-from machine import Pin, PWM, UART  # type: ignore
+from machine import Pin, PWM, UART                  # type: ignore
 # custom
-from BLE_CEEO import Yell, Listen   # type: ignore
+from BLE_CEEO import Yell, Listen                   # type: ignore
 from espnow_bluetooth_relay import check_bluetooth
 
 class Woodchip_Kitchen:

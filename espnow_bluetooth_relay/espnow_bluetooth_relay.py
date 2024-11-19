@@ -48,6 +48,7 @@ def check_bluetooth():
 
 def send_bluetooth():
     raise NotImplementedError
+    return None
 
 refresh_rate = 0.5 #seconds
 
