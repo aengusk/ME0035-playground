@@ -1,13 +1,13 @@
 # Python
 import time
 import asyncio
+import random
 # MicroPython
 from machine import Pin, PWM, UART                  # type: ignore (suppresses Pylance lint warning)
 # custom
 from BLE_CEEO import Yell, Listen                   # type: ignore
 from espnow_bluetooth_relay import check_bluetooth
 from buttonsequences import ButtonSequenceManager
-import random
 
 threadsleep = 0.01
 
@@ -20,20 +20,20 @@ class Woodchip_Kitchen:
         self.on = not bool(self.on_switch.value()) # the switch is connected to ground when the game is on
 
         self.mode_switch = Pin('GPIO9', Pin.IN, Pin.PULL_UP)
-        self.local_mode = bool(self.mode_switch.value()) # the switch is connected to ground when the game is in global mode
+        self.local_mode = bool(self.mode_switch.value()) # the switch is connected to ground when the game is in global mode, add if statements in main
 
 
         # Button setup
-        self.btn1 = Pin('GPIO0', Pin.IN, Pin.PULL_UP) # pull up resistor; other btn rail is connected to ground, so btn.value becomes 0 when pressed
-        self.btn2 = Pin('GPIO1', Pin.IN, Pin.PULL_UP)
-        self.btn3 = Pin('GPIO2', Pin.IN, Pin.PULL_UP)
-        self.btn4 = Pin('GPIO3', Pin.IN, Pin.PULL_UP)
+#         self.btn1 = Pin('GPIO0', Pin.IN, Pin.PULL_UP) # pull up resistor; other btn rail is connected to ground, so btn.value becomes 0 when pressed
+#         self.btn2 = Pin('GPIO1', Pin.IN, Pin.PULL_UP)
+#         self.btn3 = Pin('GPIO2', Pin.IN, Pin.PULL_UP)
+#         self.btn4 = Pin('GPIO3', Pin.IN, Pin.PULL_UP)
         
         # Button LED setup
-        self.led1 = Pin('GPIO4', Pin.OUT) 
-        self.led2 = Pin('GPIO5', Pin.OUT)
-        self.led3 = Pin('GPIO6', Pin.OUT)
-        self.led4 = Pin('GPIO7', Pin.OUT)
+#         self.led1 = Pin('GPIO4', Pin.OUT) 
+#         self.led2 = Pin('GPIO5', Pin.OUT)
+#         self.led3 = Pin('GPIO6', Pin.OUT)
+#         self.led4 = Pin('GPIO7', Pin.OUT)
         
         self.button_sequence_manager = ButtonSequenceManager()
 
@@ -41,25 +41,38 @@ class Woodchip_Kitchen:
         # for status leds on station?
         
         # Stepper motor setup
-        self.in1 = Pin(27, Pin.OUT)
-        self.in2 = Pin(26, Pin.OUT)
-        self.in3 = Pin(6, Pin.OUT)
-        self.in4 = Pin(7, Pin.OUT)
+        self.in1 = Pin('GPIO16', Pin.OUT)
+        self.in2 = Pin('GPIO17', Pin.OUT)
+        self.in3 = Pin('GPIO18', Pin.OUT)
+        self.in4 = Pin('GPIO19', Pin.OUT)
         
-        # Full-step sequence (forward)
-        self.full_step_sequence = [
-            [1, 0, 1, 0],  # Step 1
-            [0, 1, 1, 0],  # Step 2
-            [0, 1, 0, 1],  # Step 3
-            [1, 0, 0, 1],  # Step 4
+        self.in1_arrow = Pin('GPIO15', Pin.OUT)
+        self.in2_arrow = Pin('GPIO14', Pin.OUT)
+        self.in3_arrow = Pin('GPIO13', Pin.OUT)
+        self.in4_arrow = Pin('GPIO12', Pin.OUT)
+        
+        # Forward step sequence
+        self.forward_step_sequence = [
+            [1, 0, 0, 0],  # Step 1
+            [1, 1, 0, 0],  # Step 2
+            [0, 1, 0, 0],  # Step 3
+            [0, 1, 1, 0],  # Step 4
+            [0, 0, 1, 0],  # Step 5
+            [0, 0, 1, 1],  # Step 6
+            [0, 0, 0, 1],  # Step 7
+            [1, 0, 0, 1],  # Step 8
         ]
 
-        # Full-step sequence (reverse)
-        self.reverse_full_step_sequence = [
-            [1, 0, 0, 1],  # Step 4
-            [0, 1, 0, 1],  # Step 3
-            [0, 1, 1, 0],  # Step 2
-            [1, 0, 1, 0],  # Step 1
+        # Reverse step sequence
+        self.reverse_step_sequence = [
+            [1, 0, 0, 1],  # Step 8 
+            [0, 0, 0, 1],  # Step 7
+            [0, 0, 1, 1],  # Step 6
+            [0, 0, 1, 0],  # Step 5
+            [0, 1, 1, 0],  # Step 4
+            [0, 1, 0, 0],  # Step 3
+            [1, 1, 0, 0],  # Step 2
+            [1, 0, 0, 0],  # Step 1 
         ]
         
         # Food option setup
@@ -69,83 +82,36 @@ class Woodchip_Kitchen:
             "ramen": self.ramen
         }
         self.food_steps = {
-            "burger": 10, # placeholder values
-            "smoothie": 20,
-            "ramen": 30
+            "burger": 128, 
+            "smoothie": 256,
+            "ramen": 384
         }
+        self.food_steps_arrow = {
+            "burger": 128, 
+            "smoothie": 192,
+            "ramen": 256
+        }
+        self.foods = ['burger', 'smoothie', 'ramen']
         
-        # # UART connection
-        # self.uart_pico = UART(1, baudrate=9600, tx=17, rx=16)  # adjust TX/RX pins as needed
-        
-        # Bluetooth connection
-        # if we decide to do pico to pico communication
-        
-        # Run game
-        #main()
+
         
         
     # Function to set the stepper motor states
-    def set_step(self, step):
+    def set_step(self, step, in1, in2, in3, in4):
         self.in1.value(step[0])
         self.in2.value(step[1])
         self.in3.value(step[2])
         self.in4.value(step[3])
 
     # Function to rotate the stepper motors (pass the step sequence)
-    def rotate_motor(self, delay, steps, step_sequence):
+    def rotate_motor(self, delay, steps, step_sequence, in1, in2, in3, in4):
         for _ in range(steps):
             for step in step_sequence:
-                self.set_step(step)
+                self.set_step(step, in1, in2, in3, in4)
                 time.sleep(delay)
                 
-    # Functions for each food sequence
-    # These will include all the logic that involves communicating with the other station
-    def burger(self):
-        # button logic
-
-        tuple_length = 6 
-        randomized_tuple = generate_random_tuple(tuple_length)
-
-        self.button_sequence_manager.new_sequence(3,randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],3)
-
-        raise NotImplementedError
-        
-    def smoothie(self):
-        # button logic
-
-        tuple_length = 8 
-        randomized_tuple = generate_random_tuple(tuple_length)
-
-        self.button_sequence_manager.new_sequence(randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7])
-
-
-        raise NotImplementedError
-        
-    def ramen(self):
-        # button logic
-
-        tuple_length = 8 
-        randomized_tuple = generate_random_tuple(tuple_length)
-
-        self.button_sequence_manager.new_sequence(randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7])
-
-        raise NotImplementedError
-    
-    # def new_sequence(self, *args):
-    #     '''
-    #     This is the last function that Aengus was about to write before dinner 11/19 5:20 PM
-    #     This should be callable with a tuple sequence (1,3,4,2) as args[0]
-    #     or with no args, in which case it should generate its own sequence
-    #     '''
-    #     raise NotImplementedError
-
-    #     sequence = NotImplemented
-    #     self.button_sequence_manager.new_sequence(sequence)
-
-    
     def generate_random_tuple(self,length):
-    
-    
+
         if length < 3:
             raise ValueError("Length must be at least 3 to accommodate a nested tuple.")
         
@@ -174,35 +140,77 @@ class Woodchip_Kitchen:
         
         main_numbers.insert(insert_index, nested_tuple)
         return tuple(main_numbers)
+                
+    # Functions for each food sequence
+    def burger(self):
+        tuple_length = 6 
+        randomized_tuple = self.generate_random_tuple(tuple_length)
+        message = 'burger'
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        self.button_sequence_manager.new_sequence((3,randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],3))
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
 
-
-
-
+    def smoothie(self):
+        tuple_length = 8 
+        randomized_tuple = self.generate_random_tuple(tuple_length)
+        message = 'smoothie'
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        self.button_sequence_manager.new_sequence((randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7]))
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
         
-
+    def ramen(self):
+        tuple_length = 8 
+        randomized_tuple = self.generate_random_tuple(tuple_length)
+        message = 'ramen'
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        self.button_sequence_manager.new_sequence((randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7]))
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+    
+    # Monitoring functions, async
     async def monitor_switches(self):
         while True:
             self.on = not bool(self.on_switch.value())
+            self.local_mode = bool(self.mode_switch.value())
             await asyncio.sleep(threadsleep)
     
         
-    # Main code
-    def main(self):
+    # Game code, async
+    async def game(self):
         while True:
-            message = check_bluetooth()
-            if message:  # check if data is available to read
-                if message in self.food_functions: # check if the received message matches one of the commands
-                    #print(f"New Order: {message}")
-                    self.rotate_motor(0.01, self.food_steps[message], self.full_step_sequence) # rotate motors to correct pictures
-                    self.food_functions[message]()  # call the corresponding function
-                    self.rotate_motor(0.01, self.food_steps[message], self.reverse_full_step_sequence) # rotate motors back to starting pictures when order is complete
+            if self.on:
+                if self.local_mode:
+                    message = random.choice(self.foods)
                 else:
-                    print("Unknown command received.")
+                    message = check_bluetooth()
+                    if message == 'k0': message = 'burger'
+                    if message == 'k1': message = 'smoothie'
+                    if message == 'k2': message = 'ramen'
+                
+                if message in self.food_functions: 
+                    # rotate motors to correct food position
+                    #self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+                    #self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+                    self.food_functions[message]()  # Execute the corresponding function
+                    # rotate motor back to starting position
+                    #self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+                    #self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+                else:
+                    print("No order received.")
+            await asyncio.sleep(0.01)  
             
-            time.sleep(0.1)
+    # Main code!
+    async def main(self):
+        tasks = asyncio.gather(self.monitor_switches(),self.game())
+        await tasks # wait for duration
 
 
 
 if __name__ == '__main__':
     kitchen = Woodchip_Kitchen()
-    kitchen.main()
+    asyncio.run(kitchen.main())
