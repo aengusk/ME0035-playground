@@ -143,19 +143,36 @@ class Woodchip_Kitchen:
     #     self.button_sequence_manager.new_sequence(sequence)
 
     
-    def generate_random_tuple(length):
-
+    def generate_random_tuple(self,length):
+    
+    
         if length < 3:
             raise ValueError("Length must be at least 3 to accommodate a nested tuple.")
         
-
-        main_numbers = [random.choice([1, 2, 3, 4]) for _ in range(length - 1)]
+        # Create the nested tuple with distinct numbers
+        first_number = random.choice([1, 2, 3, 4])
+        second_number = random.choice([num for num in [1, 2, 3, 4] if num != first_number])
+        nested_tuple = (first_number, second_number)
         
-        nested_tuple = (random.choice([1, 2, 3, 4]), random.choice([1, 2, 3, 4]))
+        # Initialize the main tuple list
+        main_numbers = []
         
+        # Fill the rest of the tuple ensuring no consecutive repeats
+        while len(main_numbers) < length - 1:
+            next_number = random.choice([1, 2, 3, 4])
+            if not main_numbers or main_numbers[-1] != next_number:
+                main_numbers.append(next_number)
+        
+        # Insert the nested tuple at a random position ensuring no consecutive repeats
         insert_index = random.randint(0, length - 2)
+        if insert_index > 0 and main_numbers[insert_index - 1] == nested_tuple[0]:
+            # Adjust if the first number of the nested tuple would repeat
+            nested_tuple = (random.choice([num for num in [1, 2, 3, 4] if num != main_numbers[insert_index - 1]]), nested_tuple[1])
+        if insert_index < length - 2 and main_numbers[insert_index] == nested_tuple[1]:
+            # Adjust if the second number of the nested tuple would repeat
+            nested_tuple = (nested_tuple[0], random.choice([num for num in [1, 2, 3, 4] if num != main_numbers[insert_index]]))
+        
         main_numbers.insert(insert_index, nested_tuple)
-    
         return tuple(main_numbers)
 
 
