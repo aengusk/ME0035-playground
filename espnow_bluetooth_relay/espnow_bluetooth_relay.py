@@ -4,17 +4,18 @@
 
 # Python
 import time
+from sys import platform
 # custom
 from BLE_Minimal import Sniff, Yell # type: ignore (suppresses Pylance lint warning)
-from networking import Networking   # type: ignore
-
-networking = Networking()
 yeller = Yell()
-#sniffer = Sniff()
+sniffer = Sniff('k', verbose = False)
 
-# recipient_mac = b'\xff\xff\xff\xff\xff\xff' #This mac sends to all
 
-macs_whitelist = (b'T2\x04!p\xcc',) # a tuple of the mac addresses that we will listen to
+if platform == 'esp32':
+    from networking import Networking   # type: ignore
+    networking = Networking()
+    # recipient_mac = b'\xff\xff\xff\xff\xff\xff' #This mac sends to all
+    macs_whitelist = (b'T2\x04!p\xcc') # a tuple of the mac addresses that we will listen to
 
 def check_NOW(verbose = False, verify_mac = True):
     messages = list(networking.aen.return_messages())
@@ -31,32 +32,62 @@ def check_NOW(verbose = False, verify_mac = True):
             continue
         if message == 0:
             print('add a burger to the order')
-            yeller.advertize('k0')
+            yeller.advertise('k0')
         elif message == 1:
             print('add a smoothie to the order')
-            yeller.advertize('k1')
+            yeller.advertise('k1')
         elif message == 2:
             print('add a ramen to the order')
-            yeller.advertize('k2')
+            yeller.advertise('k2')
 
 def send_NOW(message):
     raise NotImplementedError
     # This might not be needed if we end up being one-directional
 
+def send_bluetooth(message):
+    yeller.advertise('k' + message)
+
 def check_bluetooth():
-    raise NotImplementedError
+    message = sniffer.last
+    sniffer.last = ''
+    if message:
+        return message
+    else:
+        return None
 
-def send_bluetooth():
-    raise NotImplementedError
-    return None
-
-refresh_rate = 0.5 #seconds
-
-def be_relay(verbose = False, verify_mac = True): # keep structured so that it can be turned into an async function
+def be_relay(verbose = False, verify_mac = True, refresh_rate = 0.5): # keep structured so that it can be turned into an async function
     while True:
         check_NOW(verbose = verbose, verify_mac = verify_mac)
         #check_bluetooth(verbose = verbose) # this might not be necessary without two different tables
         time.sleep(refresh_rate)
 
+'''def testmain():
+    from sys import platform
+    if platform == 'esp32':
+        iter = 0
+        while True:
+            send_bluetooth('aengus{}'.format(iter := iter + 1))
+            time.sleep(0.69079)
+    elif platform == 'rp2':
+        while True:
+            message = check_bluetooth()
+            print(message)
+            time.sleep(1)
+    else:
+        raise RuntimeError('platform not understood: {}'.format(platform))'''
+    
+
+sniffer.scan(0)
+
 if __name__ == '__main__':
-    be_relay()
+    if platform == 'rp2':
+        print('about to start checking bluetoooth once every second')
+        iter = 0
+        while True:
+            print(iter := iter + 1)
+            message = check_bluetooth()
+            print(message)
+            time.sleep(1)
+    elif platform == 'esp32':
+        print('about to start being an ESP relay')
+        be_relay(verify_mac = False)
