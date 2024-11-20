@@ -31,6 +31,8 @@ class AprilTagMusicController:
         self.prev_reset_state = False
         self.prev_add_state   = False
         self.prev_play_state  = False
+        self.playingSong = False
+        self.playCurrent = False # Flag to play the current note being read by the tag
 
         self.speaker = PWM(self.PWM_PIN, Pin.OUT)
         self.speaker.duty_u16(int(0))
@@ -64,22 +66,41 @@ class AprilTagMusicController:
 
             await asyncio.sleep(0.1) # Small delay to debounce
     
+    # Plays the current note
+    async def playCurrentNote(self):
+        while True:
+            if not self.playingSong and self.playCurrent:
+                print("Playing current note : " + str(self.activeNoteIndex))
+                self.speaker.duty_u16(int(65535))
+                self.speaker.freq(self.Notes[self.activeNoteIndex])
+                await asyncio.sleep(0.5) # Play note for half a second
+                self.speaker.duty_u16(int(0))
+                await asyncio.sleep(0.5) # Wait for half a second
+                self.playCurrent = False
+            await asyncio.sleep(0.01)
+        
+    # Adds a note to the play queue
     async def addNote(self):
         print("Added: ", self.Notes[self.activeNoteIndex])
         self.NotesQueue.append(self.Notes[self.activeNoteIndex])
     
+    # Removes all notes from the queue
     async def resetNotes(self):
         self.NotesQueue.clear()
 
+    # Plays all the notes stored in the queue
     async def playNotes(self):
+        self.playingSong = True
         for Note in self.NotesQueue:
             print(Note)
-            self.speaker.duty_u16(int(65535/8))
+            self.speaker.duty_u16(int(65535))
             self.speaker.freq(Note)
             await asyncio.sleep(0.5) # Play note for half a second
             self.speaker.duty_u16(int(0))
             await asyncio.sleep(0.5) # Wait for half a second
+        self.playingSong = False
     
+    # Catches bluetooth messages, splits into note index and AprilTag ID 
     async def getActiveNoteBluetooth(self):
         listen_device = Listen(name=self.BLUETOOTH_DEVICE_NAME, verbose=True)
         while True:
@@ -96,9 +117,13 @@ class AprilTagMusicController:
                                 if len(indexes) >= 2:
                                     self.activeNoteIndex = int(indexes[0].strip())
                                     print(f"Updated activeNoteIndex: {self.activeNoteIndex}")
+                                    self.playCurrent = True
 
                                     if self.activeFoodIndex != indexes[1]:
-                                        self.activeFoodIndex = indexes[1]
+                                        foodIndex = indexes[1]
+                                        if len(foodIndex) > 1:
+                                            foodIndex = foodIndex[0]
+                                        self.activeFoodIndex = foodIndex
                                         print(f"Updated activeFoodIndex: {self.activeFoodIndex}")
                                         await self.sendFoodIndex()
 
@@ -124,7 +149,8 @@ class AprilTagMusicController:
     async def main(self):
         await asyncio.gather(
             self.getActiveNoteBluetooth(),
-            self.checkButtons()
+            self.checkButtons(),
+            self.playCurrentNote()
         )
 
 # Create instance of controller class and run code
