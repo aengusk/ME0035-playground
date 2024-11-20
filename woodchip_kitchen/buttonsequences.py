@@ -19,6 +19,7 @@ class ButtonSequenceManager:
         self.current_index = 0  # The index of the current step in the sequence
         self.last_time = 0  # For debouncing
         self.last_pressed = {}  # To track the last time each button was pressed
+        self.sequence_complete = True
         
         # Initialize button handlers and their LEDs
         for button_id, config in self.BUTTON_CONFIG.items():
@@ -37,6 +38,7 @@ class ButtonSequenceManager:
         Set up a new sequence of button presses. Each step in the sequence can
         be a single button ID (e.g., 1) or a tuple of button IDs (e.g., (2, 3)).
         """
+        self.sequence_complete = False
         self.current_sequence = sequence
         self.current_index = 0
         self._reset_leds()
@@ -110,3 +112,4 @@ class ButtonSequenceManager:
             self._activate_current_step()
         else:
             print("Sequence completed!")
+            self.sequence_complete = True
