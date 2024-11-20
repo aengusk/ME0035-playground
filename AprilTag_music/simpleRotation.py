@@ -45,7 +45,13 @@ async def main(p):
                 p.send(str(toSend))
                 lastSent = toSend
 
-
+        # To reconnect bluetooth if it disconnects
+        if not p.isConnected():
+            print("Bluetooth disconnected, trying again")
+            try:
+                p.connect()
+            except:
+                print("Could not reconnect bluetooth")
 
         await asyncio.sleep(0.01)
 
