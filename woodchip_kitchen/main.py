@@ -7,6 +7,7 @@ from machine import Pin, PWM, UART                  # type: ignore (suppresses P
 from BLE_CEEO import Yell, Listen                   # type: ignore
 from espnow_bluetooth_relay import check_bluetooth
 from buttonsequences import ButtonSequenceManager
+import random
 
 threadsleep = 0.01
 
@@ -101,26 +102,65 @@ class Woodchip_Kitchen:
     # These will include all the logic that involves communicating with the other station
     def burger(self):
         # button logic
+
+        tuple_length = 6 
+        randomized_tuple = generate_random_tuple(tuple_length)
+
+        self.button_sequence_manager.new_sequence(3,randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],3)
+
         raise NotImplementedError
         
     def smoothie(self):
         # button logic
+
+        tuple_length = 8 
+        randomized_tuple = generate_random_tuple(tuple_length)
+
+        self.button_sequence_manager.new_sequence(randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7])
+
+
         raise NotImplementedError
         
     def ramen(self):
         # button logic
+
+        tuple_length = 8 
+        randomized_tuple = generate_random_tuple(tuple_length)
+
+        self.button_sequence_manager.new_sequence(randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7])
+
         raise NotImplementedError
     
-    def new_sequence(self, *args):
-        '''
-        This is the last function that Aengus was about to write before dinner 11/19 5:20 PM
-        This should be callable with a tuple sequence (1,3,4,2) as args[0]
-        or with no args, in which case it should generate its own sequence
-        '''
-        raise NotImplementedError
+    # def new_sequence(self, *args):
+    #     '''
+    #     This is the last function that Aengus was about to write before dinner 11/19 5:20 PM
+    #     This should be callable with a tuple sequence (1,3,4,2) as args[0]
+    #     or with no args, in which case it should generate its own sequence
+    #     '''
+    #     raise NotImplementedError
 
-        sequence = NotImplemented
-        self.button_sequence_manager.new_sequence(sequence)
+    #     sequence = NotImplemented
+    #     self.button_sequence_manager.new_sequence(sequence)
+
+    
+    def generate_random_tuple(length):
+
+        if length < 3:
+            raise ValueError("Length must be at least 3 to accommodate a nested tuple.")
+        
+
+        main_numbers = [random.choice([1, 2, 3, 4]) for _ in range(length - 1)]
+        
+        nested_tuple = (random.choice([1, 2, 3, 4]), random.choice([1, 2, 3, 4]))
+        
+        insert_index = random.randint(0, length - 2)
+        main_numbers.insert(insert_index, nested_tuple)
+    
+        return tuple(main_numbers)
+
+
+
+
         
 
     async def monitor_switches(self):
