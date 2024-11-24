@@ -102,7 +102,7 @@ class AprilTagMusicController:
             if not self.playingSong and self.playCurrent:
                 print("Playing current note : " + str(self.activeNoteIndex))
                 
-                Notes = self.Notes[self.activeFoodIndex]
+                Notes = self.Notes[int(self.activeFoodIndex)]
                 
                 self.speaker.freq(Notes[self.activeNoteIndex])
                 self.speaker.duty(self.SPEAKER_PWM)
@@ -114,7 +114,7 @@ class AprilTagMusicController:
         
     # Adds a note to the play queue
     async def addNote(self):
-        Notes = self.Notes[self.activeFoodIndex]
+        Notes = self.Notes[int(self.activeFoodIndex)]
         print("Added: ", Notes[self.activeNoteIndex])
         self.NotesQueue.append(Notes[self.activeNoteIndex])
     
@@ -201,5 +201,5 @@ class AprilTagMusicController:
 
 # Create instance of controller class and run code
 controller = AprilTagMusicController()
-asyncio.run(controller.test())
-#asyncio.run(controller.main())
+#asyncio.run(controller.test())
+asyncio.run(controller.main())
