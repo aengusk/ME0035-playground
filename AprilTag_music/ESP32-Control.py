@@ -10,8 +10,13 @@ class AprilTagMusicController:
     PLAY_PIN  = 20 # D9
     PWM_PIN   = 18 # D10
     BLUETOOTH_DEVICE_NAME = 'Camera' # OpenMV Peripheral name
+    
+    SHUTDOWN_PIN = 16
+    AUDIO_PIN = 23
+    SPEAKER_PWM = 10 # change this as needed for volume control
+    
 
-    # All possible note frequencies
+    # All possible note frequencies (Hz)
     Notes = [262, # Index 0: C4
              294, # Index 1: D
              330, # Index 2: E
@@ -23,7 +28,7 @@ class AprilTagMusicController:
             ]
 
     def __init__(self):
-
+        # initializing buttons
         self.resetButton = Pin(self.RESET_PIN, Pin.IN, Pin.PULL_UP)
         self.addButton   = Pin(self.ADD_PIN, Pin.IN, Pin.PULL_UP)
         self.playButton  = Pin(self.PLAY_PIN, Pin.IN, Pin.PULL_UP)
@@ -33,8 +38,13 @@ class AprilTagMusicController:
         self.prev_play_state  = False
         self.playingSong = False
         self.playCurrent = False # Flag to play the current note being read by the tag
-
-        self.speaker = PWM(self.PWM_PIN, Pin.OUT)
+        
+        # initializing the speaker
+        self.shutdownPin = Pin(self.SHUTDOWN_PIN, Pin.OUT)
+        self.shutdownPin.value(1)
+        self.speaker = PWM(Pin(self.AUDIO_PIN, Pin.OUT))
+        
+        
         self.speaker.duty_u16(int(0))
         self.activeNoteIndex = 0 # Received over bluetooth from OpenMV cam
         self.activeFoodIndex = None
@@ -71,10 +81,10 @@ class AprilTagMusicController:
         while True:
             if not self.playingSong and self.playCurrent:
                 print("Playing current note : " + str(self.activeNoteIndex))
-                self.speaker.duty_u16(int(65535))
                 self.speaker.freq(self.Notes[self.activeNoteIndex])
+                self.speaker.duty(self.SPEAKER_PWM)
                 await asyncio.sleep(0.5) # Play note for half a second
-                self.speaker.duty_u16(int(0))
+                self.speaker.duty(0)
                 await asyncio.sleep(0.5) # Wait for half a second
                 self.playCurrent = False
             await asyncio.sleep(0.01)
@@ -93,10 +103,10 @@ class AprilTagMusicController:
         self.playingSong = True
         for Note in self.NotesQueue:
             print(Note)
-            self.speaker.duty_u16(int(65535))
+            self.speaker.duty(self.SPEAKER_PWM)
             self.speaker.freq(Note)
             await asyncio.sleep(0.5) # Play note for half a second
-            self.speaker.duty_u16(int(0))
+            self.speaker.duty(0)
             await asyncio.sleep(0.5) # Wait for half a second
         self.playingSong = False
     
@@ -119,11 +129,14 @@ class AprilTagMusicController:
                                     print(f"Updated activeNoteIndex: {self.activeNoteIndex}")
                                     self.playCurrent = True
 
-                                    if self.activeFoodIndex != indexes[1]:
+                                    if self.activeFoodIndex != indexes[1]:  
                                         foodIndex = indexes[1]
-                                        if len(foodIndex) > 1:
+                                        
+                                        if len(foodIndex) > 1: # Prevents error if buffer has more than one item in it
                                             foodIndex = foodIndex[0]
+                                            
                                         self.activeFoodIndex = foodIndex
+                                        self.activeFoodIndex = indexes[1]
                                         print(f"Updated activeFoodIndex: {self.activeFoodIndex}")
                                         await self.sendFoodIndex()
 
@@ -138,13 +151,17 @@ class AprilTagMusicController:
                     await asyncio.sleep(1)
             except Exception as e:
                 print(f"An error occurred: {e}")
-                # listen_device.disconnect()
+                listen_device.disconnect()
                 print("Attempting to reconnect...")
                 await asyncio.sleep(1)
     
     async def sendFoodIndex(self):
         recipient_mac = b'\xff\xff\xff\xff\xff\xff'
         self.networking.aen.send(recipient_mac, self.activeFoodIndex)
+    
+    async def test(self):
+        self.NotesQueue = self.Notes
+        await asyncio.gather(self.playNotes())
      
     async def main(self):
         await asyncio.gather(
@@ -155,4 +172,5 @@ class AprilTagMusicController:
 
 # Create instance of controller class and run code
 controller = AprilTagMusicController()
-asyncio.run(controller.main())
+asyncio.run(controller.test())
+#asyncio.run(controller.main())
