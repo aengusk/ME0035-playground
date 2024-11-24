@@ -17,7 +17,16 @@ class AprilTagMusicController:
     
 
     # All possible note frequencies (Hz)
-    Notes = [262, # Index 0: C4
+    belowC = [131, # Index 0: C3
+             147, # Index 1: D
+             165, # Index 2: E
+             175, # Index 3: F
+             196, # Index 4: G
+             220, # Index 5: A
+             247, # Index 6: B
+             262, # Index 7: C4
+            ]
+    middleC = [262, # Index 0: C4
              294, # Index 1: D
              330, # Index 2: E
              349, # Index 3: F
@@ -26,6 +35,17 @@ class AprilTagMusicController:
              494, # Index 6: B
              523, # Index 7: C5
             ]
+    aboveC = [523, # Index 0: C5
+             587, # Index 1: D
+             659, # Index 2: E
+             698, # Index 3: F
+             784, # Index 4: G
+             880, # Index 5: A
+             988, # Index 6: B
+             1047, # Index 7: C6
+            ]
+    
+    Notes = [belowC, middleC, aboveC]
 
     def __init__(self):
         # initializing buttons
@@ -45,7 +65,7 @@ class AprilTagMusicController:
         self.speaker = PWM(Pin(self.AUDIO_PIN, Pin.OUT))
         
         
-        self.speaker.duty_u16(int(0))
+        self.speaker.duty(0)
         self.activeNoteIndex = 0 # Received over bluetooth from OpenMV cam
         self.activeFoodIndex = None
         self.NotesQueue = [] # Contains the current notes
@@ -81,7 +101,10 @@ class AprilTagMusicController:
         while True:
             if not self.playingSong and self.playCurrent:
                 print("Playing current note : " + str(self.activeNoteIndex))
-                self.speaker.freq(self.Notes[self.activeNoteIndex])
+                
+                Notes = self.Notes[self.activeFoodIndex]
+                
+                self.speaker.freq(Notes[self.activeNoteIndex])
                 self.speaker.duty(self.SPEAKER_PWM)
                 await asyncio.sleep(0.5) # Play note for half a second
                 self.speaker.duty(0)
@@ -91,8 +114,9 @@ class AprilTagMusicController:
         
     # Adds a note to the play queue
     async def addNote(self):
-        print("Added: ", self.Notes[self.activeNoteIndex])
-        self.NotesQueue.append(self.Notes[self.activeNoteIndex])
+        Notes = self.Notes[self.activeFoodIndex]
+        print("Added: ", Notes[self.activeNoteIndex])
+        self.NotesQueue.append(Notes[self.activeNoteIndex])
     
     # Removes all notes from the queue
     async def resetNotes(self):
@@ -100,8 +124,11 @@ class AprilTagMusicController:
 
     # Plays all the notes stored in the queue
     async def playNotes(self):
+        print("in playNotes!")
         self.playingSong = True
+        
         for Note in self.NotesQueue:
+            print("in the for looooop")
             print(Note)
             self.speaker.duty(self.SPEAKER_PWM)
             self.speaker.freq(Note)
@@ -160,8 +187,10 @@ class AprilTagMusicController:
         self.networking.aen.send(recipient_mac, self.activeFoodIndex)
     
     async def test(self):
-        self.NotesQueue = self.Notes
-        await asyncio.gather(self.playNotes())
+        for i in range(0,3):
+            self.NotesQueue = self.Notes[i]
+            await asyncio.gather(self.playNotes())
+            await asyncio.sleep(0.1)
      
     async def main(self):
         await asyncio.gather(
