@@ -11,8 +11,8 @@ class AprilTagMusicController:
     PWM_PIN   = 18 # D10
     BLUETOOTH_DEVICE_NAME = 'Camera' # OpenMV Peripheral name
     
-    SHUTDOWN_PIN = 16
-    AUDIO_PIN = 23
+    SHUTDOWN_PIN = 16 # D6
+    AUDIO_PIN = 23 # D5
     SPEAKER_PWM = 10 # change this as needed for volume control
     
 
