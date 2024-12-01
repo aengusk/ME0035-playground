@@ -13,8 +13,11 @@ class AprilTagMusicController:
     
     SHUTDOWN_PIN = 16 # D6
     AUDIO_PIN = 23 # D5
-    SPEAKER_PWM = 10 # change this as needed for volume control
+    SPEAKER_PWM = 0 # D0 is this supposed to be GPIO0? change this as needed for volume control
     
+    # 4 Remaining pins: 1(D1), 2(D2), 21 (D3), 22(D4)
+    BLE_INDICATOR = 1 # D1
+    NOW_INDICATOR = 2 # D2
 
     # All possible note frequencies (Hz)
     belowC = [131, # Index 0: C3
@@ -52,6 +55,11 @@ class AprilTagMusicController:
         self.resetButton = Pin(self.RESET_PIN, Pin.IN, Pin.PULL_UP)
         self.addButton   = Pin(self.ADD_PIN, Pin.IN, Pin.PULL_UP)
         self.playButton  = Pin(self.PLAY_PIN, Pin.IN, Pin.PULL_UP)
+        
+        self.bleIndicator = Pin(self.BLE_INDICATOR, Pin.OUT)
+        self.nowIndicator = Pin(self.NOW_INDICATOR, Pin.OUT)
+        self.msgIn = False
+        self.msgOut = False
 
         self.prev_reset_state = False
         self.prev_add_state   = False
@@ -122,6 +130,7 @@ class AprilTagMusicController:
     async def resetNotes(self):
         self.NotesQueue.clear()
 
+
     # Plays all the notes stored in the queue
     async def playNotes(self):
         print("in playNotes!")
@@ -144,11 +153,14 @@ class AprilTagMusicController:
             try:
                 if listen_device.connect_up(timeout=5000):
                     print(f"Connected to {self.BLUETOOTH_DEVICE_NAME}")
+                    self.bleIndicator.value(1)
                     while True:
                         if listen_device.is_any:
                             # Read and update self.activeNoteIndex with the received data
                             received_message = listen_device.read()
                             print(f"Received message: {received_message}")
+                            self.msgIn = True
+                            
                             try:
                                 indexes = received_message.split(',')
                                 if len(indexes) >= 2:
@@ -175,8 +187,10 @@ class AprilTagMusicController:
                         await asyncio.sleep(0) # Must be 0 so that received message buffer is always immediately
                 else:
                     print(f"Failed to connect to {self.BLUETOOTH_DEVICE_NAME}")
+                    self.bleIndicator.value(0)
                     await asyncio.sleep(1)
             except Exception as e:
+                self.bleIndicator.value(0)
                 print(f"An error occurred: {e}")
                 listen_device.disconnect()
                 print("Attempting to reconnect...")
@@ -185,18 +199,39 @@ class AprilTagMusicController:
     async def sendFoodIndex(self):
         recipient_mac = b'\xff\xff\xff\xff\xff\xff'
         self.networking.aen.send(recipient_mac, self.activeFoodIndex)
+        self.msgOut = True
+
     
     async def test(self):
         for i in range(0,3):
             self.NotesQueue = self.Notes[i]
             await asyncio.gather(self.playNotes())
             await asyncio.sleep(0.1)
+            
+
+    async def checkIndicators(self):
+        while True:
+            if self.msgIn:
+                for i in range(0,2):
+                    self.bleIndicator.value(0)
+                    await asycio.sleep(1)
+                    self.bleIndicator.value(1)
+                    await asyncio.sleep(1)
+                    self.msgIn = False
+            if self.msgOut:
+                self.nowIndicator.value(0)
+                    await asycio.sleep(1)
+                    self.nowIndicator.value(1)
+                    await asyncio.sleep(1)
+                    self.msgOut = False
+            await asyncio.sleep(0.01)
      
     async def main(self):
         await asyncio.gather(
             self.getActiveNoteBluetooth(),
             self.checkButtons(),
-            self.playCurrentNote()
+            self.playCurrentNote(),
+            self.checkIndicators()
         )
 
 # Create instance of controller class and run code
