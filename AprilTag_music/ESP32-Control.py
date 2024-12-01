@@ -214,13 +214,14 @@ class AprilTagMusicController:
             if self.msgIn:
                 for i in range(0,2):
                     self.bleIndicator.value(0)
-                    await asycio.sleep(1)
+                    await asyncio.sleep(1)
                     self.bleIndicator.value(1)
                     await asyncio.sleep(1)
                     self.msgIn = False
             if self.msgOut:
-                self.nowIndicator.value(0)
-                    await asycio.sleep(1)
+                for i in range(0,2):
+                    self.nowIndicator.value(0)
+                    await asyncio.sleep(1)
                     self.nowIndicator.value(1)
                     await asyncio.sleep(1)
                     self.msgOut = False
