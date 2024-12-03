@@ -8,14 +8,13 @@ class AprilTagMusicController:
     RESET_PIN = 17 # D7
     ADD_PIN   = 19 # D8
     PLAY_PIN  = 20 # D9
-    PWM_PIN   = 18 # D10
     BLUETOOTH_DEVICE_NAME = 'Camera' # OpenMV Peripheral name
     
     SHUTDOWN_PIN = 16 # D6
     AUDIO_PIN = 23 # D5
-    SPEAKER_PWM = 0 # D0 is this supposed to be GPIO0? change this as needed for volume control
+    SPEAKER_PWM = 20 # the duty cycle!!! Change to impact volume
     
-    # 4 Remaining pins: 1(D1), 2(D2), 21 (D3), 22(D4)
+    # 4 Remaining pins: 1(D1), 2(D2), 21 (D3), 22(D4), 18(D10)
     BLE_INDICATOR = 1 # D1
     NOW_INDICATOR = 2 # D2
 
@@ -58,6 +57,8 @@ class AprilTagMusicController:
         
         self.bleIndicator = Pin(self.BLE_INDICATOR, Pin.OUT)
         self.nowIndicator = Pin(self.NOW_INDICATOR, Pin.OUT)
+        self.bleIndicator.value(0)
+        self.nowIndicator.value(0)
         self.msgIn = False
         self.msgOut = False
 
@@ -84,17 +85,17 @@ class AprilTagMusicController:
         while True:
             current_reset_state = self.resetButton.value()
             if self.prev_reset_state and not current_reset_state:
-                print('Reset button pressed!')
+                print('-------- Reset button pressed!--------')
                 await self.resetNotes()
 
             current_add_state = self.addButton.value()
             if self.prev_add_state and not current_add_state:
-                print('Add button pressed!')
+                print('--------- Add button pressed!--------')
                 await self.addNote()
 
             current_play_state = self.playButton.value()
             if self.prev_play_state and not current_play_state:
-                print('Play button pressed!')
+                print('-------- Play button pressed!-------')
                 await self.playNotes()
 
             # Update previous button states
@@ -187,7 +188,7 @@ class AprilTagMusicController:
                         await asyncio.sleep(0) # Must be 0 so that received message buffer is always immediately
                 else:
                     print(f"Failed to connect to {self.BLUETOOTH_DEVICE_NAME}")
-                    self.bleIndicator.value(0)
+                    self.bleIndicator.value(0) #TODO: Why does this not turn off the indicator?
                     await asyncio.sleep(1)
             except Exception as e:
                 self.bleIndicator.value(0)
