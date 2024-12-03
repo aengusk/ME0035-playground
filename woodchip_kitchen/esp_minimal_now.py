@@ -1,4 +1,7 @@
-from now import Now
+from now import Now # type: ignore
+from BLE_Minimal import Yell
+
+yeller = Yell()
 
 def my_callback(msg, mac):
     print(mac, msg)
