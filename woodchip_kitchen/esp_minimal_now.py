@@ -1,5 +1,6 @@
+import time
 from now import Now # type: ignore
-from BLE_Minimal import Yell
+from BLE_Minimal import Yell # type: ignore
 
 yeller = Yell()
 

@@ -2,7 +2,7 @@ import time
 from networking import Networking # type: ignore
 a = Networking()
 
-from BLE_Minimal import Yell
+from BLE_Minimal import Yell  # type: ignore
 yeller = Yell()
 while True:
     messages = list(a.aen.return_messages())
