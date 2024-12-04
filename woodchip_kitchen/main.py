@@ -98,13 +98,14 @@ class Woodchip_Kitchen:
         
     # Function to set the stepper motor states
     def set_step(self, step, in1, in2, in3, in4):
-        self.in1.value(step[0])
-        self.in2.value(step[1])
-        self.in3.value(step[2])
-        self.in4.value(step[3])
+        in1.value(step[0])
+        in2.value(step[1])
+        in3.value(step[2])
+        in4.value(step[3])
 
     # Function to rotate the stepper motors (pass the step sequence)
     def rotate_motor(self, delay, steps, step_sequence, in1, in2, in3, in4):
+        print('rotating ahhhhh')
         for _ in range(steps):
             for step in step_sequence:
                 self.set_step(step, in1, in2, in3, in4)
@@ -146,37 +147,37 @@ class Woodchip_Kitchen:
         tuple_length = 6 
         randomized_tuple = self.generate_random_tuple(tuple_length)
         message = 'burger'
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
-        #self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
-        self.button_sequence_manager.new_sequence((3,randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],3))
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        self.button_sequence_manager.new_sequence((4,randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],4))
         while not self.button_sequence_manager.sequence_complete:
             time.sleep(0.1)
-        #self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
 
     def smoothie(self):
         tuple_length = 8 
         randomized_tuple = self.generate_random_tuple(tuple_length)
         message = 'smoothie'
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
-        #self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
         self.button_sequence_manager.new_sequence((randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7]))
         while not self.button_sequence_manager.sequence_complete:
             time.sleep(0.1)
-        #self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
         
     def ramen(self):
         tuple_length = 8 
         randomized_tuple = self.generate_random_tuple(tuple_length)
-        #message = 'ramen'
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
-        #self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+        message = 'ramen'
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+        self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
         self.button_sequence_manager.new_sequence((randomized_tuple[0],randomized_tuple[1],randomized_tuple[2],randomized_tuple[3],randomized_tuple[4],randomized_tuple[5],randomized_tuple[6],randomized_tuple[7]))
         while not self.button_sequence_manager.sequence_complete:
             time.sleep(0.1)
-        #self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
-        #self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+        self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+        self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
     
     # Monitoring functions, async
     async def monitor_switches(self):
@@ -190,22 +191,27 @@ class Woodchip_Kitchen:
     async def game(self):
         while True:
             if self.on:
+                print('self.local_mode: {}'.format(self.local_mode))
                 if self.local_mode:
                     message = random.choice(self.foods)
                 else:
                     message = check_bluetooth()
+                    print('received {} over bluetooth'.format(message))
                     if message == 'k0': message = 'burger'
                     if message == 'k1': message = 'smoothie'
                     if message == 'k2': message = 'ramen'
                 
-                if message in self.food_functions: 
+                if message in self.food_functions:
+                    print(message)
                     # rotate motors to correct food position
-                    self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
-                    self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
+                    #self.rotate_motor(0.001, self.food_steps_arrow[message], self.forward_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow) # arrow motors
+                    #self.rotate_motor(0.001, self.food_steps[message], self.forward_step_sequence, self.in1, self.in2, self.in3, self.in4) # board motors
                     self.food_functions[message]()  # Execute the corresponding function
+                    print('game!')
                     # rotate motor back to starting position
-                    self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
-                    self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+                    #self.rotate_motor(0.001, self.food_steps[message], self.reverse_step_sequence, self.in1, self.in2, self.in3, self.in4)
+                    #self.rotate_motor(0.001, self.food_steps_arrow[message], self.reverse_step_sequence, self.in1_arrow, self.in2_arrow, self.in3_arrow, self.in4_arrow)
+                    await asyncio.sleep(1)
                 else:
                     print("No order received.")
             await asyncio.sleep(0.01)  
